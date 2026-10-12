@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 98%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 14% 94%;
+    --secondary-foreground: 220 20% 15%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 262 83% 58%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 232 23% 5%;       /* #0A0B10 */
+    --foreground: 210 20% 98%;
+    --card: 230 20% 8%;             /* #0E1017 with glassmorphism */
+    --card-foreground: 210 20% 98%;
+    --popover: 230 20% 8%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 262 83% 66%;         /* Electric Violet #8B5CF6 */
+    --primary-foreground: 210 20% 98%;
+    --secondary: 228 16% 14%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 228 16% 12%;
+    --muted-foreground: 218 11% 65%;
+    --accent: 189 94% 43%;          /* Electric Cyan #06B6D4 */
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 230 16% 16%;
+    --input: 230 16% 16%;
+    --ring: 262 83% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-purple-500/20 selection:text-purple-300;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Glassmorphism Surface Utility */
+.glass-panel {
+  background: rgba(14, 16, 23, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.light .glass-panel {
+  background: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Linear-style Ambient Mesh Glow */
+.mesh-gradient-glow {
+  background: radial-gradient(circle at 50% -20%, rgba(139, 92, 246, 0.15), transparent 70%),
+              radial-gradient(circle at 80% 30%, rgba(6, 182, 212, 0.08), transparent 60%);
+}
+
+/* Monospace Code font styling */
+pre, code, .font-mono {
+  font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+}
