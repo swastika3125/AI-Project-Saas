@@ -1,0 +1,224 @@
+{
+  "repository": {
+    "name": "core-api",
+    "full_name": "octo-corp/core-api",
+    "owner": "octo-corp",
+    "default_branch": "main"
+  },
+  "policy": {
+    "name": "Production Zero-Trust Security Gate",
+    "block_on_critical": true,
+    "block_on_high": true,
+    "block_unverified_sensitive_mods": true,
+    "max_risk_score": 70
+  },
+  "pull_request": {
+    "pr_number": 42,
+    "title": "Fix login for legacy usernames",
+    "author": "alex-dev",
+    "source_branch": "fix/legacy-login",
+    "target_branch": "main",
+    "head_sha": "e4a1f9c8b7d6e5a4",
+    "state": "open",
+    "risk_score": 91.0,
+    "uncertainty_range": 4.5,
+    "merge_decision": "BLOCK",
+    "summary": "Critical SQL Injection vulnerability discovered in legacy user lookup query; unverified AI hypothesis indicates possible session hijacking risk in legacy authentication bypass."
+  },
+  "findings": [
+    {
+      "id": "find-sql-1",
+      "rule_id": "semgrep.python.sqli.raw-query-formatting",
+      "source": "semgrep",
+      "severity": "CRITICAL",
+      "is_verified": true,
+      "confidence": 1.0,
+      "file_path": "app/auth/login.py",
+      "start_line": 42,
+      "end_line": 46,
+      "code_snippet": "query = f\"SELECT * FROM users WHERE username = '{legacy_user}'\"\ncursor.execute(query)",
+      "title": "SQL Injection in Legacy User Authentication Query",
+      "explanation": "Untrusted user input 'legacy_user' is directly formatted into a raw SQL query string without parameterized escaping.",
+      "why_it_matters": "Allows unauthenticated attackers to execute arbitrary SQL commands, bypass password verification, and extract private credentials.",
+      "impact": "Complete authentication bypass and potential remote database compromise.",
+      "suggested_tests": [
+        {
+          "command": "pytest tests/test_login.py -k 'test_legacy_username_sqli_quote' --tb=short",
+          "description": "Asserts safe escaping and parameterized handling when single-quote payloads are passed to legacy login.",
+          "framework": "pytest"
+        },
+        {
+          "command": "pytest tests/test_login.py -k 'test_reject_malformed_legacy_identities'",
+          "description": "Verifies that malicious SQL tautologies like '' OR 1=1 -- are rejected.",
+          "framework": "pytest"
+        }
+      ],
+      "safer_alternative": "cursor.execute(\"SELECT * FROM users WHERE username = %s\", (legacy_user,))",
+      "evidence_refs": [
+        {
+          "scanner": "semgrep",
+          "rule": "semgrep.python.sqli.raw-query-formatting",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "id": "find-sql-2",
+      "duplicate_of": "find-sql-1",
+      "rule_id": "bandit.B608",
+      "source": "bandit",
+      "severity": "CRITICAL",
+      "is_verified": true,
+      "confidence": 1.0,
+      "file_path": "app/auth/login.py",
+      "start_line": 42,
+      "end_line": 46,
+      "code_snippet": "cursor.execute(query)",
+      "title": "Hardcoded SQL Query Concatenation (B608)",
+      "explanation": "Possible SQL injection vector via string concatenation in execute call.",
+      "why_it_matters": "Bandit detected unparameterized SQL statement.",
+      "impact": "Data exposure.",
+      "evidence_refs": [
+        {
+          "scanner": "bandit",
+          "rule": "bandit.B608",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "id": "find-ai-hypo-1",
+      "rule_id": "ai.hypothesis.session-hijacking",
+      "source": "ai_hypothesis",
+      "severity": "HIGH",
+      "is_verified": false,
+      "confidence": 0.76,
+      "file_path": "app/auth/login.py",
+      "start_line": 52,
+      "end_line": 58,
+      "code_snippet": "session['legacy_token'] = create_legacy_session(username)\nupdate_admin_role_cache(username)",
+      "title": "Hypothesized Session Privilege Escalation in Legacy Normalization",
+      "explanation": "AI Hypothesis (Unverified): Changing legacy username normalization logic may allow an attacker to forge session keys matching existing administrative accounts before role verification executes.",
+      "why_it_matters": "Could permit privilege escalation to admin rights if legacy username collisions occur.",
+      "impact": "Potential unauthorized access to admin refund workflows in payment modules.",
+      "suggested_tests": [
+        {
+          "command": "pytest tests/test_auth.py -k 'test_legacy_session_hijack_prevention'",
+          "description": "Simulate colliding username normalization and verify admin session tokens are not issued.",
+          "framework": "pytest"
+        }
+      ],
+      "safer_alternative": "verify_identity_before_session_creation(username)\nsession['legacy_token'] = create_secure_scoped_session(username)",
+      "evidence_refs": [
+        {
+          "call_graph_path": "login -> is_admin -> payments.refund",
+          "confidence_score": 0.76
+        }
+      ]
+    }
+  ],
+  "impact": {
+    "nodes": [
+      {
+        "id": "app/auth/login.py::login",
+        "type": "custom",
+        "data": {
+          "label": "login",
+          "kind": "function",
+          "file_path": "app/auth/login.py",
+          "is_changed": true,
+          "is_sensitive": true,
+          "sensitive_category": "auth",
+          "call_depth": 0,
+          "metrics": {
+            "start_line": 35,
+            "end_line": 70,
+            "total_calls": 3
+          }
+        },
+        "position": {
+          "x": 60,
+          "y": 160
+        }
+      },
+      {
+        "id": "app/auth/permissions.py::is_admin",
+        "type": "custom",
+        "data": {
+          "label": "is_admin",
+          "kind": "function",
+          "file_path": "app/auth/permissions.py",
+          "is_changed": false,
+          "is_sensitive": true,
+          "sensitive_category": "auth",
+          "call_depth": 1,
+          "metrics": {
+            "start_line": 12,
+            "end_line": 28,
+            "total_calls": 5
+          }
+        },
+        "position": {
+          "x": 380,
+          "y": 160
+        }
+      },
+      {
+        "id": "services/payments.py::payments.refund",
+        "type": "custom",
+        "data": {
+          "label": "payments.refund",
+          "kind": "function",
+          "file_path": "services/payments.py",
+          "is_changed": false,
+          "is_sensitive": true,
+          "sensitive_category": "payment",
+          "call_depth": 2,
+          "metrics": {
+            "start_line": 80,
+            "end_line": 105,
+            "total_calls": 2
+          }
+        },
+        "position": {
+          "x": 700,
+          "y": 160
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-import-1",
+        "source": "app/auth/login.py::login",
+        "target": "app/auth/permissions.py::is_admin",
+        "label": "checks privilege",
+        "animated": true,
+        "style": {
+          "stroke": "#EF4444",
+          "strokeWidth": 2.5
+        }
+      },
+      {
+        "id": "e-import-2",
+        "source": "app/auth/permissions.py::is_admin",
+        "target": "services/payments.py::payments.refund",
+        "label": "gates access to",
+        "animated": true,
+        "style": {
+          "stroke": "#EF4444",
+          "strokeWidth": 2.5
+        }
+      }
+    ],
+    "affected_modules": [
+      "app/auth/login.py",
+      "app/auth/permissions.py",
+      "services/payments.py"
+    ],
+    "sensitive_touchpoints": [
+      "login (auth)",
+      "is_admin (auth)",
+      "payments.refund (payment)"
+    ]
+  }
+}

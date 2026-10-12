@@ -54,7 +54,40 @@ export interface Scan {
   completed_at?: string;
   counts?: ScanSummaryCounts;
   findings?: Finding[];
+  pull_request?: {
+    id: string;
+    pr_number: number;
+    title: string;
+    author: string;
+    source_branch: string;
+    target_branch: string;
+    head_sha: string;
+    state: string;
+  };
 }
+
+export interface OverviewStats {
+  scanned_prs_count: number;
+  policy_gating_blocks: number;
+  avg_latency_ms: number;
+  precision_rate: number;
+  tracked_repos_count: number;
+  total_findings_count: number;
+  verified_findings_count: number;
+  hypotheses_count: number;
+}
+
+export interface ImportResult {
+  status: string;
+  message: string;
+  pr_id: string;
+  scan_id: string;
+  pr_number: number;
+  findings_count: number;
+  merged_duplicates_count: number;
+  redirect_url: string;
+}
+
 
 export interface PullRequest {
   id: string;

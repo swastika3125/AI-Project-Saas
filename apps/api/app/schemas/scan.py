@@ -36,6 +36,20 @@ class ScanResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class PullRequestInfo(BaseModel):
+    id: str
+    pr_number: int
+    title: str
+    author: str
+    source_branch: str
+    target_branch: str = "main"
+    head_sha: str
+    state: str = "open"
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ScanDetailResponse(ScanResponse):
     findings: List[FindingResponse] = Field(default_factory=list)
+    pull_request: Optional[PullRequestInfo] = None
+

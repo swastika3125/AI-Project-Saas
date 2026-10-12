@@ -102,25 +102,28 @@ export default function ScanDetailPage() {
             <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground flex-wrap">
               <span className="flex items-center gap-1.5 text-foreground font-bold">
                 <GitPullRequest className="w-4 h-4 text-purple-400" />
-                Pull Request #142
+                Pull Request #{scan.pull_request?.pr_number ?? 142}
               </span>
               <span>•</span>
               <span className="bg-secondary/80 px-2 py-0.5 rounded border border-border/50">
-                refactor/session-tokens
+                {scan.pull_request?.source_branch ?? "refactor/session-tokens"}
               </span>
               <span>→</span>
-              <span className="bg-secondary/80 px-2 py-0.5 rounded border border-border/50">main</span>
+              <span className="bg-secondary/80 px-2 py-0.5 rounded border border-border/50">
+                {scan.pull_request?.target_branch ?? "main"}
+              </span>
               <span>•</span>
-              <span>Author: @sophia-dev</span>
+              <span>Author: @{scan.pull_request?.author ?? "sophia-dev"}</span>
             </div>
 
             <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
-              feat: Refactor session authentication and token validation
+              {scan.pull_request?.title ?? "feat: Refactor session authentication and token validation"}
             </h1>
 
             <p className="text-xs text-muted-foreground leading-relaxed max-w-2xl font-sans">
               {scan.summary}
             </p>
+
 
             {/* Quick Actions */}
             <div className="flex items-center gap-3 pt-2">

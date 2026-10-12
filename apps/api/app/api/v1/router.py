@@ -8,6 +8,8 @@ from app.api.v1.impact import router as impact_router
 from app.api.v1.policies import router as policies_router
 from app.api.v1.feedback import router as feedback_router
 from app.api.v1.demo import router as demo_router
+from app.api.v1.import_data import router as import_router
+from app.api.v1.overview import router as overview_router
 
 api_router = APIRouter()
 
@@ -20,3 +22,6 @@ api_router.include_router(impact_router)
 api_router.include_router(policies_router)
 api_router.include_router(feedback_router)
 api_router.include_router(demo_router)
+api_router.include_router(import_router)
+api_router.include_router(overview_router)
+

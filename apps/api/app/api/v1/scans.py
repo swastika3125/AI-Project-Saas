@@ -7,7 +7,8 @@ from datetime import datetime, timedelta
 from app.core.database import get_db
 from app.models.scan import Scan
 from app.models.finding import Finding
-from app.schemas.scan import ScanResponse, ScanDetailResponse, ScanSummaryCounts
+from app.models.pull_request import PullRequest
+from app.schemas.scan import ScanResponse, ScanDetailResponse, ScanSummaryCounts, PullRequestInfo
 from app.schemas.finding import FindingResponse
 
 router = APIRouter(prefix="/scans", tags=["scans"])
@@ -53,11 +54,23 @@ async def get_scan_details(scan_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Scan).where(Scan.id == scan_id))
     scan = result.scalars().first()
     if not scan:
-        raise HTTPException(status_code=404, detail="Scan not found")
+        # Fallback: check if scan_id is a PR ID
+        pr_scan_res = await db.execute(
+            select(Scan).where(Scan.pr_id == scan_id).order_by(Scan.created_at.desc())
+        )
+        scan = pr_scan_res.scalars().first()
+        if not scan:
+            raise HTTPException(status_code=404, detail="Scan not found")
 
     # Fetch findings
-    findings_res = await db.execute(select(Finding).where(Finding.scan_id == scan_id).order_by(Finding.created_at.asc()))
+    findings_res = await db.execute(
+        select(Finding).where(Finding.scan_id == scan.id).order_by(Finding.created_at.asc())
+    )
     findings = findings_res.scalars().all()
+
+    # Fetch pull request
+    pr_res = await db.execute(select(PullRequest).where(PullRequest.id == scan.pr_id))
+    pr = pr_res.scalars().first()
 
     # Calculate summary counts
     counts = ScanSummaryCounts(
@@ -70,10 +83,27 @@ async def get_scan_details(scan_id: str, db: AsyncSession = Depends(get_db)):
         hypotheses=sum(1 for f in findings if not f.is_verified),
     )
 
-    resp = ScanDetailResponse.model_validate(scan)
-    resp.counts = counts
-    resp.findings = [FindingResponse.model_validate(f) for f in findings]
-    return resp
+    findings_list = [FindingResponse.model_validate(f) for f in findings]
+
+    return ScanDetailResponse(
+        id=scan.id,
+        pr_id=scan.pr_id,
+        commit_sha=scan.commit_sha,
+        status=scan.status,
+        pipeline_stage=scan.pipeline_stage,
+        risk_score=scan.risk_score,
+        uncertainty_range=scan.uncertainty_range,
+        merge_decision=scan.merge_decision,
+        summary=scan.summary,
+        pipeline_timings=scan.pipeline_timings or {},
+        created_at=scan.created_at,
+        completed_at=scan.completed_at,
+        counts=counts,
+        findings=findings_list,
+        pull_request=PullRequestInfo.model_validate(pr) if pr else None
+    )
+
+
 
 
 @router.get("/{scan_id}/findings", response_model=List[FindingResponse])

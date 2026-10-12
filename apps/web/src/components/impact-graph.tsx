@@ -15,7 +15,7 @@ import { ShieldAlert, Zap, FileCode, CheckCircle2, Lock, CreditCard, Database } 
 import { CallGraphData, GraphNodeData } from "@/types";
 
 // Custom Node Component
-function CustomImpactNode({ data }: NodeProps<GraphNodeData>) {
+function CustomImpactNode({ data }: any) {
   const getCategoryIcon = (category?: string) => {
     switch (category) {
       case "auth":
@@ -84,7 +84,8 @@ interface ImpactGraphProps {
 export function ImpactGraph({ data }: ImpactGraphProps) {
   const [selectedNode, setSelectedNode] = useState<GraphNodeData | null>(null);
 
-  const nodeTypes = useMemo(() => ({ custom: CustomImpactNode }), []);
+  const nodeTypes = useMemo(() => ({ custom: CustomImpactNode as any }), []);
+
 
   const onNodeClick = (_: React.MouseEvent, node: any) => {
     setSelectedNode(node.data);
@@ -113,7 +114,8 @@ export function ImpactGraph({ data }: ImpactGraphProps) {
         attributionPosition="bottom-right"
         className="dark:bg-[#0A0B10]"
       >
-        <Background color="#8B5CF6" gap={20} size={1} opacity={0.06} />
+        <Background color="rgba(139, 92, 246, 0.15)" gap={20} size={1} />
+
         <Controls className="!bg-card !border-border !rounded-lg overflow-hidden shadow-lg" />
         <MiniMap
           nodeColor={(n: any) => (n.data?.is_sensitive ? "#EF4444" : n.data?.is_changed ? "#8B5CF6" : "#64748B")}

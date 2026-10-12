@@ -35,11 +35,15 @@ export default function LandingPage() {
   ];
 
   useEffect(() => {
-    let currentLine = 0;
+    let index = 1;
+    setTypedLines([fullDiff[0]]);
     const interval = setInterval(() => {
-      if (currentLine < fullDiff.length) {
-        setTypedLines((prev) => [...prev, fullDiff[currentLine]]);
-        currentLine++;
+      if (index < fullDiff.length) {
+        const nextLine = fullDiff[index];
+        if (typeof nextLine === "string") {
+          setTypedLines((prev) => [...prev.filter(Boolean), nextLine]);
+        }
+        index++;
       } else {
         setDemoStage(1);
         clearInterval(interval);

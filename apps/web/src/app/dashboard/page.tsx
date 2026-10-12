@@ -22,26 +22,29 @@ import {
   CartesianGrid,
 } from "recharts";
 import { api } from "@/lib/api";
-import { PullRequest, Repository } from "@/types";
+import { PullRequest, Repository, OverviewStats } from "@/types";
 import { formatSeverityBadge } from "@/lib/utils";
 
 export default function DashboardPage() {
   const [prs, setPrs] = useState<PullRequest[]>([]);
   const [repos, setRepos] = useState<Repository[]>([]);
   const [trends, setTrends] = useState<any[]>([]);
+  const [overviewStats, setOverviewStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [loadedPrs, loadedRepos, loadedTrends] = await Promise.all([
+        const [loadedPrs, loadedRepos, loadedTrends, loadedStats] = await Promise.all([
           api.getPullRequests(),
           api.getRepositories(),
           api.getRiskTrends(),
+          api.getOverviewStats(),
         ]);
         setPrs(loadedPrs);
         setRepos(loadedRepos);
         setTrends(loadedTrends);
+        setOverviewStats(loadedStats);
       } finally {
         setLoading(false);
       }
@@ -62,23 +65,33 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <Link
-          href="/dashboard/scans/demo-scan-142"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all font-mono self-start"
-        >
-          <span>Hero PR #142 Analysis</span>
-          <ArrowUpRight className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/settings"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary hover:bg-border text-foreground text-xs font-mono transition-colors"
+          >
+            <span>Import PR Data</span>
+          </Link>
+          <Link
+            href="/dashboard/scans/demo-scan-142"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-all font-mono self-start"
+          >
+            <span>Hero PR #142 Analysis</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
 
-      {/* Metric Stat Cards with Count-up */}
+      {/* Metric Stat Cards with Live Database Counts */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 rounded-xl border border-border/80 bg-card/60 glass-panel">
           <div className="flex items-center justify-between text-muted-foreground mb-3">
             <span className="text-xs font-mono font-medium">Scanned Pull Requests</span>
             <GitPullRequest className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-2xl font-bold font-mono text-foreground">3</div>
+          <div className="text-2xl font-bold font-mono text-foreground">
+            {overviewStats?.scanned_prs_count ?? prs.length}
+          </div>
           <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-mono">
             <span className="text-emerald-400">100%</span>
             <span>coverage via webhooks</span>
@@ -90,7 +103,9 @@ export default function DashboardPage() {
             <span className="text-xs font-mono font-medium">Policy Gating Blocks</span>
             <ShieldAlert className="w-4 h-4 text-red-400" />
           </div>
-          <div className="text-2xl font-bold font-mono text-red-400">2 PRs</div>
+          <div className="text-2xl font-bold font-mono text-red-400">
+            {overviewStats?.policy_gating_blocks ?? 2} PRs
+          </div>
           <div className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-mono">
             <span>Blocked prior to merge</span>
           </div>
@@ -101,7 +116,9 @@ export default function DashboardPage() {
             <span className="text-xs font-mono font-medium">Avg Pipeline Latency</span>
             <Clock className="w-4 h-4 text-cyan-400" />
           </div>
-          <div className="text-2xl font-bold font-mono text-cyan-400">1.24s</div>
+          <div className="text-2xl font-bold font-mono text-cyan-400">
+            {overviewStats?.avg_latency_ms?.toFixed(2) ?? "1.24"}s
+          </div>
           <div className="text-[11px] text-muted-foreground mt-1 font-mono">
             <span>AST & scanners sandboxed</span>
           </div>
@@ -112,12 +129,15 @@ export default function DashboardPage() {
             <span className="text-xs font-mono font-medium">Verified Scanner Precision</span>
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400">96.8%</div>
+          <div className="text-2xl font-bold font-mono text-emerald-400">
+            {overviewStats?.precision_rate?.toFixed(1) ?? "96.8"}%
+          </div>
           <div className="text-[11px] text-muted-foreground mt-1 font-mono">
             <span>Developer feedback votes</span>
           </div>
         </div>
       </div>
+
 
       {/* Risk Trend Chart (Recharts) */}
       <div className="p-6 rounded-xl border border-border/80 bg-card/60 glass-panel">
